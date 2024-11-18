@@ -15,6 +15,25 @@ file(GLOB UTIL_SOURCES "util/*.cpp")
 set(SOURCES ${SOLUTION_SOURCES} ${UTIL_SOURCES})
 
 # Executables
-add_executable(lcs_parallel solutions/lcs_parallel.cpp)
-add_executable(lcs_parallel_mpi solutions/lcs_parallel_mpi.cpp)
 add_executable(lcs_serial solutions/lcs_serial.cpp)
+add_executable(lcs_parallel solutions/lcs_parallel.cpp)
+add_executable(lcs_distributed solutions/lcs_distributed.cpp)
+
+add_custom_target(
+    serial_script
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/serial_script.py
+    COMMENT "Running Python script for Serial LCS algorithm"
+)
+
+add_custom_target(
+    parallel_script
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/parallel_script.py
+    COMMENT "Running Python script for Parallel LCS algorithm"
+)
+
+add_custom_target(
+    distributed_script
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/distributed_script.py
+    COMMENT "Running Python script for Distributed LCS algorithm"
+)
+

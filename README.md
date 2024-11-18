@@ -39,4 +39,10 @@ This project implements the Longest Common Subsequence (LCS) algorithm using var
    ```bash
    ./lcs_serial --str1 <first string> --str2 <second string>
    ./lcs_parallel --nThreads <number of threads> --str1 <first string> --str2 <second string>
-   ./lcs_parallel_mpi --nThreads <number of threads> --str1 <first string> --str2 <second string>
+   ./lcs_distributed --nThreads <number of threads> --str1 <first string> --str2 <second string>
+
+6. **Run Scripts**
+   ```bash
+   make serial_script
+   make parallel_script
+   make distributed_script
