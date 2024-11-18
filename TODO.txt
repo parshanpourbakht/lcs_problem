@@ -1,0 +1,4 @@
+TODO:
+
+[] Create a test script (probs in python .py files) to generate inputs and feed into our program (Just like the assignments)
+[]    

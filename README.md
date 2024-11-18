@@ -37,6 +37,6 @@ This project implements the Longest Common Subsequence (LCS) algorithm using var
    
 5. **Run Executables**
    ```bash
-   ./lcs_serial
-   ./lcs_parallel
-   ./lcs_parallel_mpi
+   ./lcs_serial --str1 <first string> --str2 <second string>
+   ./lcs_parallel --nThreads <number of threads> --str1 <first string> --str2 <second string>
+   ./lcs_parallel_mpi --nThreads <number of threads> --str1 <first string> --str2 <second string>
