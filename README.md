@@ -20,7 +20,6 @@ This project implements the Longest Common Subsequence (LCS) algorithm using var
 1. **Clone the Repository**
    ```bash
    git clone https://github.com/parshanpourbakht/lcs_problem.git
-   cd lcs_problem
    
 2. **Create a build directory**
    ```bash

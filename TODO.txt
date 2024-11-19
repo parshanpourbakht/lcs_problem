@@ -1,7 +1,11 @@
 TODO:
 
-[] Create a test script (probs in python .py files) to generate inputs and feed into our program (Just like the assignments)
+Priority
+[] Figure out decomp pattern for parallel impl of LCS
 [] Implement Parallel algo (make sure to use C++ threads)
+
+Other
+[] Create a test script (probs in python .py files) to generate inputs and feed into our program (Just like the assignments)
 [] Implement Distributed algo (use MPI) 
 
 *NOTE: We can use old assignment files and stuff 
