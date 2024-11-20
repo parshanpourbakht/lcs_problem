@@ -12,55 +12,32 @@
 #define DEFAULT_FIRST_STRING "AAACD"
 #define DEFAULT_SECOND_STRING "ABA"
 
-using MemoizedTable = std::vector<std::vector<std::optional<int>>>;
 
+using MemoizedTable = std::vector<std::vector<int>>;
+
+//Set the initial values of the table to 0 and included an extra row and column for the base case
 MemoizedTable initialize_table(int numRows, int numCols){
-
-  // MemoizedTable memoizedTable(numRows + 1, std::vector<std::optional<int>>(numCols + 1));
-
-  // // Setting the elements in first column to value 0
-  // for(auto& row : memoizedTable) {
-  //   row[0] = 0; 
-  // }
-
-  // // Setting the elements in the first row to value 0
-  // std::fill(memoizedTable[0].begin(), memoizedTable[0].end(), 0);
-
-
-  return MemoizedTable(numRows + 1, std::vector<std::optional<int>>(numCols + 1, 0)); 
+  return MemoizedTable(numRows + 1, std::vector<int>(numCols + 1, 0)); 
 }
 
+// Worker function to calculate the LCS values for a given diagonal
 void wavefront_worker(MemoizedTable& lcsTable, const std::string& str1, const std::string& str2, int numRows, int numCols, int diag) {
+  // Calculate the row and column bounds for the current diagonal
   int rowStart = std::max(1, diag - numCols);
   int rowEnd = std::min(numRows, diag - 1);
 
-  for (int row = rowStart; row<= rowEnd; ++row){
+  // Calculate the LCS values for the current diagonal
+  for (int row = rowStart; row <= rowEnd; ++row){
     int col = diag - row;
+    // If characters match, increment the LCS length from the diagonal
     if (str1[row - 1] == str2[col - 1]) {
-      lcsTable[row][col] = lcsTable[row - 1][col - 1].value() + 1;
+      lcsTable[row][col] = lcsTable[row - 1][col - 1] + 1;
     } else {
-      lcsTable[row][col] = std::max(lcsTable[row - 1][col].value(), lcsTable[row][col - 1].value());
+      // If no match, take the maximum value from the top or left
+      lcsTable[row][col] = std::max(lcsTable[row - 1][col], lcsTable[row][col - 1]);
     }
   }
 }
-
-
-// void calculate_lcs_table(MemoizedTable& lcsTable, const std::string& str1, const std::string& str2, int numRows, int numCols) {
-                      
-//   for (int row = 1; row <= numRows; row++) {
-//     for (int col = 1; col <= numCols; col++) {
-//       if (str1[row - 1] == str2[col - 1]) {
-//         // If characters match, increment the LCS length from the diagonal
-//         lcsTable[row][col] = lcsTable[row - 1][col - 1] ? lcsTable[row - 1][col - 1].value() + 1 : 1;
-//       } else {
-//         // If no match, take the maximum value from the top or left
-//         auto top = lcsTable[row - 1][col] ? lcsTable[row - 1][col].value() : 0;
-//         auto left = lcsTable[row][col - 1] ? lcsTable[row][col - 1].value() : 0;
-//         lcsTable[row][col] = std::max(top, left);
-//       }
-//     }
-//   }
-// }
 
 // Function to backtrack and reconstruct the LCS string
 std::string backtrack_lcs(const MemoizedTable& lcsTable, const std::string& str1, const std::string& str2, int numRows, int numCols) {
@@ -73,7 +50,7 @@ std::string backtrack_lcs(const MemoizedTable& lcsTable, const std::string& str1
       lcs += str1[row - 1]; // If characters match, add to lcs string
       row--;
       col--;
-    } else if (lcsTable[row - 1][col].value_or(0) >= lcsTable[row][col - 1].value_or(0)) {
+    } else if (lcsTable[row - 1][col] >= lcsTable[row][col - 1]) {
       row--; // Move up if the top value is larger or equal
     } else {
       col--; // Otherwise move left
@@ -94,33 +71,41 @@ std::string lcs_parallel(const std::string& str1, const std::string& str2, int n
   std::condition_variable cv;
   int completedDiag = 1;
   MemoizedTable lcsTable = initialize_table(numRows, numCols);
-  
-  auto threadWorker = [&](int threadId){
-    for (int diag = threadId +2; diag <= numRows + numCols; diag += threadSize){
-      std::unique_lock<std::mutex> lock(mtx);
-      cv.wait(lock, [&]() {return completedDiag >= diag - 1;});
 
+
+  // Calculate the LCS values for each diagonal
+  auto threadWorker = [&](int threadId){
+    // Calculate the diagonals for the current thread
+    for (int diag = threadId +2; diag <= numRows + numCols; diag += threadSize){
+      {
+        // Wait until the previous diagonal has been completed
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [&]() {return completedDiag >= diag - 1;});
+      }
+      
+      // Call the worker function to calculate the LCS values for the current diagonal
       wavefront_worker(lcsTable, str1, str2, numRows, numCols, diag); 
       {
+        // Update the completed diagonal and notify other threads
         std::lock_guard<std::mutex> guard(mtx);
         completedDiag = diag;
-        cv.notify_all();
       }
+      cv.notify_all();
     }
   };
 
+
+  // Create threads and run the worker function
   std::vector<std::thread> threads;
   for (int i = 0; i < threadSize; i++){
     threads.emplace_back(threadWorker, i);
   }
 
+  // Join the threads
   for (auto& thread : threads){
     thread.join();
   }
 
-  
-
-  // Fill the memoization table
 
   // Backtrack to find the LCS string
   std::string lcs = backtrack_lcs(lcsTable, str1, str2, numRows, numCols);
