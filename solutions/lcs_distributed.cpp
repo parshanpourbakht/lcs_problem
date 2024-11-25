@@ -1,89 +1,169 @@
 #include <iostream>
+#include <iomanip>
 #include <vector>
-#include <array>
+#include <string>
+#include <algorithm>
 #include "cxxopts.h"
-#include "optional"
+#include "get_time.h"
 
-#define DEFAULT_NUMBER_OF_THREADS 1
-#define DEFAULT_FIRST_STRING "AAACD"
+#include <mpi.h>
+
+#define DEFAULT_FIRST_STRING "AJBFAFA"
 #define DEFAULT_SECOND_STRING "ABA"
 
-using MemoizedTable = std::vector<std::vector<std::optional<int>>>;
+using MemoizedTable = std::vector<std::vector<int>>;
 
-MemoizedTable
-initialize_table(int n, int m){
-  MemoizedTable memoizedTable(n + 1, std::vector<std::optional<int>>(m + 1));
-
-  //Setting the elements in first column to value 0
-  for(auto& row : memoizedTable) {
-    row[0] = 0; 
-  }
-
-  //Setting the elements in the first row to value 0
-  std::fill(memoizedTable[0].begin(), memoizedTable[0].end(), 0);
-
-  return memoizedTable; 
+MemoizedTable initialize_table(int numRows, int numCols) {
+    return MemoizedTable(numRows + 1, std::vector<int>(numCols + 1, 0));
 }
 
-std::optional<int> 
-lcs_serial(MemoizedTable& lcsTable, 
-                             std::string str1, 
-                             std::string str2, 
-                             int n, 
-                             int m){
+void 
+wavefront_worker(MemoizedTable& lcsTable, 
+                 const std::string& str1, 
+                 const std::string& str2, 
+                 int numRows, 
+                 int numCols, 
+                 int diag) {
 
-  for(int i = 1; i <= n; i++){
-    for(int j = 1; j <= m; j++){
-      if(str1[i-1] == str2[j-1]){
-        //Checking if lcsTable[i - 1][j - 1] has a value or not
-        lcsTable[i][j] = lcsTable[i - 1][j - 1] ? lcsTable[i - 1][j - 1].value() + 1 : 1;
-      }
-      else{
-        //Checking if the top and left values of <i, j> are set with a value if not they are set to 0
-        auto top = lcsTable[i - 1][j] ? lcsTable[i - 1][j].value() : 0; 
-        auto left = lcsTable[i - 1][j] ? lcsTable[i][j - 1].value() : 0; 
+    int rowStart = std::max(1, diag - numCols);
+    int rowEnd = std::min(numRows, diag - 1);
 
-        lcsTable[i][j] = std::max(top, left);
-      }
+    for (int row = rowStart; row <= rowEnd; ++row) {
+        int col = diag - row;
+        if (str1[row - 1] == str2[col - 1]) {
+            lcsTable[row][col] = lcsTable[row - 1][col - 1] + 1;
+        } else {
+            lcsTable[row][col] = std::max(lcsTable[row - 1][col], lcsTable[row][col - 1]);
+        }
     }
-  }
+}
 
-  return lcsTable[n][m];
+std::string 
+backtrack_lcs(const MemoizedTable& lcsTable, 
+              const std::string& str1, 
+              const std::string& str2, 
+              int numRows, 
+              int numCols) {
+
+    std::string lcs;
+    int row = numRows, col = numCols;
+    while (row > 0 && col > 0) {
+        if (str1[row - 1] == str2[col - 1]) {
+            lcs += str1[row - 1];
+            row--;
+            col--;
+        } else if (lcsTable[row - 1][col] >= lcsTable[row][col - 1]) {
+            row--;
+        } else {
+            col--;
+        }
+    }
+    std::reverse(lcs.begin(), lcs.end());
+
+    return lcs;
+}
+
+std::string 
+lcs_distributed(const std::string& str1, 
+                const std::string& str2, 
+                int numRows, 
+                int numCols, 
+                double& serialTime, 
+                int rank, 
+                int size) {
+
+    timer threadTimer;
+    threadTimer.start();
+
+    MemoizedTable lcsTable = initialize_table(numRows, numCols);
+    int diagStart = rank + 1;
+    int diagEnd = numRows + numCols;
+
+    int edgeSize = std::max(numRows, numCols) + 1;
+    std::vector<int> sendBuffer(edgeSize, 0), recvBuffer(edgeSize, 0);
+
+    // Process the diagonals in round-robin 
+    for (int diag = diagStart; diag <= diagEnd; diag += size) {
+        // Receive data from the previous process 
+        if (diag > 1 && rank != 0) {
+            MPI_Recv(recvBuffer.data(), edgeSize, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            // Update the LCS table based on the received data
+            for (int i = 1; i <= edgeSize; ++i) {
+                if (i <= numRows && diag - i <= numCols && diag - i >= 1) {
+                    lcsTable[i][diag - i] = recvBuffer[i - 1];
+                }
+            }
+        }
+
+        // Compute the values for the current diagonal
+        wavefront_worker(lcsTable, str1, str2, numRows, numCols, diag);
+
+        // Send data to the next process
+        if (rank != size - 1) {
+            for (int i = 1; i <= edgeSize; ++i) {
+                if (i <= numRows && diag - i <= numCols && diag - i >= 1) {
+                    sendBuffer[i - 1] = lcsTable[i][diag - i];
+                }
+            }
+            MPI_Send(sendBuffer.data(), edgeSize, MPI_INT, rank + 1, 0, MPI_COMM_WORLD);
+        }
+    }
+
+    serialTime = threadTimer.stop();
+
+    // Debugging output prints out table values
+    // std::cout << "LCS Rank: " << rank << std::endl;
+    // for (int i = 0; i <= numRows; ++i) {
+    //     for (int j = 0; j <= numCols; ++j) {
+    //         std::cout << lcsTable[i][j] << " ";
+    //     }
+    //     std::cout << "\n";
+    // }
+
+    if (rank == 0) {
+        return backtrack_lcs(lcsTable, str1, str2, numRows, numCols);
+    }
+    return "";
 }
 
 int 
-main(int argc, char *argv[]) {
-  cxxopts::Options options("lcs_calculation",
-                           "Calculate longest common string between 2 strings");
-  options.add_options(
-      "custom",
-      {
-          {"nThreads", "Number of threads", 
-           cxxopts::value<uint>()->default_value(std::to_string(DEFAULT_NUMBER_OF_THREADS))},
-          {"str1", "First String",         
-           cxxopts::value<std::string>()->default_value(DEFAULT_FIRST_STRING)},
-          {"str2", "Second String", 
-           cxxopts::value<std::string>()->default_value(DEFAULT_SECOND_STRING)}
-      });
-  
-  auto cl_options = options.parse(argc, argv);
-  
-  uint n_threads = cl_options["nThreads"].as<uint>();
-  std::string str1 = cl_options["str1"].as<std::string>();
-  std::string str2 = cl_options["str2"].as<std::string>();
+main(int argc, 
+     char* argv[]) {
 
-  size_t n = str1.length();
-  size_t m = str2.length(); 
+    MPI_Init(&argc, &argv);
 
-  MemoizedTable lcsTable = initialize_table(n, m);
-  auto lcsValue = lcs_serial(lcsTable, str1, str2, n, m);
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  //Terminal Ouputs
-  std::cout << "Number of threads: " << n_threads << std::endl;
-  std::cout << "str1: " << str1 << std::endl;
-  std::cout << "str2: " << str2 << std::endl;
-  std::cout << "LCS: " << *lcsValue << std::endl;
+    cxxopts::Options options("lcs_calculation", "Calculate longest common subsequence between two strings");
+    options.add_options(
+        "custom",
+        {
+            {"str1", "First String", cxxopts::value<std::string>()->default_value(DEFAULT_FIRST_STRING)},
+            {"str2", "Second String", cxxopts::value<std::string>()->default_value(DEFAULT_SECOND_STRING)}
+        });
 
-  return 0;
+    auto cl_options = options.parse(argc, argv);
+    std::string str1 = cl_options["str1"].as<std::string>();
+    std::string str2 = cl_options["str2"].as<std::string>();
+
+    int numRows = str1.length();
+    int numCols = str2.length();
+    double serialTime = 0;
+
+    std::string lcsValue = lcs_distributed(str1, str2, numRows, numCols, serialTime, rank, size);
+
+    if (rank == 0) {
+        std::cout << "Distributed Implementation" << std::endl;
+        std::cout << "---------------------------" << std::endl;
+        std::cout << "str1: " << str1 << std::endl;
+        std::cout << "str2: " << str2 << std::endl;
+        std::cout << "LCS: " << lcsValue << std::endl;
+        std::cout << "Time (seconds): " << serialTime << std::endl;
+
+    }
+
+    MPI_Finalize();
+    return 0;
 }
-
