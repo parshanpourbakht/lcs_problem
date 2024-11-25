@@ -65,36 +65,14 @@ backtrack_lcs(const std::string &str1,
   return lcs;
 }
 
-int 
-main(int argc, char** argv) {
-  MPI_Init(&argc, &argv);
-
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  cxxopts::Options options("lcs_calculation",
-                           "Calculate longest common string between 2 strings");
-  options.add_options(
-      "custom",
-      {
-          {"str1", "First String",         
-           cxxopts::value<std::string>()->default_value(DEFAULT_FIRST_STRING)},
-          {"str2", "Second String", 
-           cxxopts::value<std::string>()->default_value(DEFAULT_SECOND_STRING)}
-      });
-  
-  auto cl_options = options.parse(argc, argv);
-  
-  std::string str1 = cl_options["str1"].as<std::string>();
-  std::string str2 = cl_options["str2"].as<std::string>();
-
-  // str1 = "AGGTABA"; 
-  // str2 = "GXTXAYBGXTXAYBGXTXAYBGX"; 
-
-  int numRows = str1.length();
-  int numCols = str2.length(); 
-
+void 
+lcs_distributed(const std::string& str1, 
+                const std::string& str2, 
+                int numRows, 
+                int numCols, 
+                int rank, 
+                int size) {
+                  
   // LCS table
   MemoizedTable lcsTable = initialize_table(numRows, numCols);
 
@@ -137,6 +115,39 @@ main(int argc, char** argv) {
       MPI_Send(lcsTable[row].data(), numCols + 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
   }
+}
+
+int 
+main(int argc, char** argv) {
+  MPI_Init(&argc, &argv);
+
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  cxxopts::Options options("lcs_calculation",
+                           "Calculate longest common string between 2 strings");
+  options.add_options(
+      "custom",
+      {
+          {"str1", "First String",         
+           cxxopts::value<std::string>()->default_value(DEFAULT_FIRST_STRING)},
+          {"str2", "Second String", 
+           cxxopts::value<std::string>()->default_value(DEFAULT_SECOND_STRING)}
+      });
+  
+  auto cl_options = options.parse(argc, argv);
+  
+  std::string str1 = cl_options["str1"].as<std::string>();
+  std::string str2 = cl_options["str2"].as<std::string>();
+
+  // str1 = "AGGTABA"; 
+  // str2 = "GXTXAYBGXTXAYBGXTXAYBGX"; 
+
+  int numRows = str1.length();
+  int numCols = str2.length(); 
+
+  lcs_distributed(str1, str2, numRows, numCols, rank, size);
 
   MPI_Finalize();
   return 0;
