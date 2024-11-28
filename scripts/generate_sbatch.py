@@ -11,13 +11,13 @@ output_dir = "sbatch_files"
 os.makedirs(output_dir, exist_ok=True)
 
 STUDENT_ID = "vba16"
-ASSIGNMENT_FOLDER = "CMPT_431_A6"
+ASSIGNMENT_FOLDER = "project"
 
 assert STUDENT_ID and ASSIGNMENT_FOLDER, "Please fill in the STUDENT_ID and ASSIGNMENT_FOLDER variables."
 
 commands = [
-    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/curve_area_parallel",
-    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/heat_transfer_parallel"
+    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/lcs_serial",
+    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/lcs_parallel"
 ]
 
 # chmod the commands
@@ -28,7 +28,7 @@ mpi_processes = [1, 2, 4, 8]
 nodes = [1]
 iterations = 3
 
-curve_area_params = "--coeffA 1.2 --coeffB 0.8 --nPoints 4000000000 --rSeed 129"
+lcs_serial_params = "--str1 ABCDEFGHIJKLMNOPQRSTUVWXYZ --str2 ZYXWVUTSRQPONMLKJIHGFEDCBA"
 heat_transfer_params = "--iCX 0.15 --iCY 0.1 --tSteps 1000 --gSize 4000 --mTemp 600"
 
 
