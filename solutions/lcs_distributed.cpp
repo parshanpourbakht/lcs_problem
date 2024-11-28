@@ -72,10 +72,11 @@ lcs_distributed(const std::string& str1,
                 int numCols, 
                 int rank, 
                 int size) {
-                  
-  // LCS table
+
+  // Init of LCS table                  
   MemoizedTable lcsTable = initialize_table(numRows, numCols);
 
+  // Decomposition of rows for each process
   int processRows = (numRows + size - 1) / size;
   int startRow = rank * processRows + 1; 
   int endRow = std::min((rank + 1) * processRows + 1, numRows + 1);
@@ -108,8 +109,12 @@ lcs_distributed(const std::string& str1,
     std::string lcs = backtrack_lcs(str1, str2, lcsTable);
 
     // Print the LCS length and string
-    std::cout << "LCS Length: " << lcsTable[numRows][numCols] << std::endl;
-    std::cout << "LCS String: " << lcs << std::endl;
+    std::cout << "Distributed Implementation" << std::endl; 
+    std::cout << "------------------------" << std::endl; 
+    std::cout << std::setw(5) << std::left << "Number of Processes: " << size << std::endl;
+    std::cout << std::setw(5) << std::left << "str1: " << str1 << std::endl;
+    std::cout << std::setw(5) << std::left << "str2: " << str2 << std::endl;
+    std::cout << "LCS: " << lcs << std::endl;
   } else {
     for (int row = startRow; row < endRow; ++row) {
       MPI_Send(lcsTable[row].data(), numCols + 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
@@ -141,13 +146,22 @@ main(int argc, char** argv) {
   std::string str1 = cl_options["str1"].as<std::string>();
   std::string str2 = cl_options["str2"].as<std::string>();
 
-  // str1 = "AGGTABA"; 
-  // str2 = "GXTXAYBGXTXAYBGXTXAYBGX"; 
-
   int numRows = str1.length();
   int numCols = str2.length(); 
 
+  // Initialize and start the timer
+  timer threadTimer;
+  threadTimer.start();
+
   lcs_distributed(str1, str2, numRows, numCols, rank, size);
+
+  // Stop the timer and calculate total time
+  double totalTime = threadTimer.stop();
+
+  // Print the timing information only from rank 0
+  if (rank == 0) {
+    std::cout << "Time (seconds): " << totalTime << std::endl;
+  }
 
   MPI_Finalize();
   return 0;
