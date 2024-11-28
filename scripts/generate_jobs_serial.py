@@ -12,7 +12,7 @@ def generate_random_string(size):
 # Compile the C++ code
 subprocess.run(["make"], check=True)
 
-output_dir = "sbatch_files_serial"
+output_dir = "sbatch_files"
 os.makedirs(output_dir, exist_ok=True)
 
 STUDENT_ID = "vba16"
@@ -24,6 +24,7 @@ commands = [
     f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/lcs_serial"
 ]
 
+max_jobs_per_batch = 4
 iterations = 4
 string_sizes = [8000, 12000, 14000, 18000, 20000]  # Updated string sizes
 
@@ -50,7 +51,7 @@ for string_size in string_sizes:  # Iterate over string sizes
             str2 = generate_random_string(string_size)
 
             # Generate file name and content
-            filename = f"serial_iter_{iteration}_size_{string_size}_{command.split('/')[-1]}.sbatch"
+            filename = f"test_iter_{iteration}_size_{string_size}_{command.split('/')[-1]}.sbatch"
             filepath = os.path.join(output_dir, filename)
             sbatch_content = generate_sbatch_content(iteration, command, str1, str2)
 
@@ -80,12 +81,26 @@ def check_user_jobs(user_id):
         return False
 
 # Submit jobs in batches
-for file in sbatch_files:
-    submit_sbatch(file)
-    print("Submitted:", file)
+i = 0
+while i < len(sbatch_files):
+    current_batch_jobs = 0
+
+    while current_batch_jobs < max_jobs_per_batch and i < len(sbatch_files):
+        submit_sbatch(sbatch_files[i])
+        current_batch_jobs += 1
+        i += 1
+
+    print(f"Submitted {current_batch_jobs} jobs.")
+    print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+
+    while check_user_jobs(STUDENT_ID):
+        print("Waiting for jobs to finish... checking again in 5 seconds.")
+        time.sleep(5)
+
+    print("No jobs left. Proceeding to the next batch.")
 
 # Combine SLURM output files
-def combine_slurm_outputs(output_filename="combined_output_serial.out"):
+def combine_slurm_outputs(output_filename="combined_output.out"):
     slurm_files = glob.glob("slurm-*.out")
 
     if not slurm_files:
@@ -103,4 +118,4 @@ def combine_slurm_outputs(output_filename="combined_output_serial.out"):
 
     print(f"Combined all SLURM output files into {output_filename}")
 
-combine_slurm_outputs("combined_output_serial.out")
+combine_slurm_outputs("combined_output.out")
