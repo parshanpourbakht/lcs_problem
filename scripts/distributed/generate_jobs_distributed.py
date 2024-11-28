@@ -33,7 +33,7 @@ max_jobs_per_batch = 4
 max_total_cpus = 8  # Limit on total MPI processes per batch
 
 # Function to generate SBATCH content for distributed execution
-def generate_sbatch_content(program, num_processes, num_nodes, iteration, str1, str2):
+def generate_sbatch_content(program, num_processes, num_nodes, iteration, str1, str2, string_size):
     return f"""#!/bin/bash
 #SBATCH --nodes={num_nodes}
 #SBATCH --ntasks={num_processes}
@@ -42,7 +42,7 @@ def generate_sbatch_content(program, num_processes, num_nodes, iteration, str1, 
 #SBATCH --mem=10G
 #SBATCH --partition=slow
 
-echo "Running {program.split('/')[-1]} with {num_processes} MPI processes on {num_nodes} nodes: Iteration {iteration}"
+echo "Running {program.split('/')[-1]} with {num_processes} MPI processes on {num_nodes} nodes with size {string_size}: Iteration {iteration}"
 srun {program} --str1 {str1} --str2 {str2}
 """
 
@@ -66,7 +66,7 @@ for string_size in string_sizes:  # Iterate over string sizes
                 filename = f"mpi_lcs_n{num_processes}_nodes{num_nodes}_iter{iteration}_size{string_size}.sbatch"
                 filepath = os.path.join(output_dir, filename)
                 sbatch_content = generate_sbatch_content(
-                    commands[0], num_processes, num_nodes, iteration, str1, str2
+                    commands[0], num_processes, num_nodes, iteration, str1, str2, string_size
                 )
 
                 # Write SBATCH file

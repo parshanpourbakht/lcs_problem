@@ -21,45 +21,50 @@ ASSIGNMENT_FOLDER = "build"
 assert STUDENT_ID and ASSIGNMENT_FOLDER, "Please fill in the STUDENT_ID and ASSIGNMENT_FOLDER variables."
 
 commands = [
-    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/lcs_serial"
+    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/lcs_parallel"
 ]
 
+threads = [1, 2, 4, 8]
 max_jobs_per_batch = 4
+max_total_cpus = 8
 iterations = 4
 string_sizes = [8000, 12000, 14000, 16000, 18000]  # Updated string sizes
 
-# Function to generate SBATCH content for serial execution
-def generate_sbatch_content(iteration, command, str1, str2):
+# Function to generate SBATCH content
+def generate_sbatch_content(thread_count, iteration, command, str1, str2, string_size):
     return f"""#!/bin/bash
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task={thread_count}
 #SBATCH --time=10:00
 #SBATCH --mem=5G
 #SBATCH --partition=slow
 
-echo "Running {command.split('/')[-1]}: Iteration {iteration}"
-srun {command} --str1 {str1} --str2 {str2}
+echo "Running {command.split('/')[-1]} with {thread_count} Threads and Size {string_size}: Iteration {iteration}"
+srun {command} --nThreads {thread_count} --str1 {str1} --str2 {str2}
 """
 
 sbatch_files = []
+cpu_requests = []
 
 # Generate SBATCH files
 for string_size in string_sizes:  # Iterate over string sizes
-    for iteration in range(1, iterations + 1):
-        for command in commands:
-            # Generate random strings for each job
-            str1 = generate_random_string(string_size)
-            str2 = generate_random_string(string_size)
+    for thread_count in threads:
+        for iteration in range(1, iterations + 1):
+            for command in commands:
+                # Generate random strings for each job
+                str1 = generate_random_string(string_size)
+                str2 = generate_random_string(string_size)
 
-            # Generate file name and content
-            filename = f"test_iter_{iteration}_size_{string_size}_{command.split('/')[-1]}.sbatch"
-            filepath = os.path.join(output_dir, filename)
-            sbatch_content = generate_sbatch_content(iteration, command, str1, str2)
+                # Generate file name and content
+                filename = f"test_{thread_count}_threads_iter_{iteration}_size_{string_size}_{command.split('/')[-1]}.sbatch"
+                filepath = os.path.join(output_dir, filename)
+                sbatch_content = generate_sbatch_content(thread_count, iteration, command, str1, str2, string_size)
 
-            # Write SBATCH file
-            with open(filepath, 'w') as sbatch_file:
-                sbatch_file.write(sbatch_content)
+                # Write SBATCH file
+                with open(filepath, 'w') as sbatch_file:
+                    sbatch_file.write(sbatch_content)
 
-            sbatch_files.append(filepath)
+                sbatch_files.append(filepath)
+                cpu_requests.append(thread_count)
 
 print(f"Generated SBATCH files in directory: {output_dir}")
 
@@ -84,13 +89,20 @@ def check_user_jobs(user_id):
 i = 0
 while i < len(sbatch_files):
     current_batch_jobs = 0
+    current_batch_cpus = 0
 
     while current_batch_jobs < max_jobs_per_batch and i < len(sbatch_files):
-        submit_sbatch(sbatch_files[i])
-        current_batch_jobs += 1
-        i += 1
+        job_cpus = cpu_requests[i]
 
-    print(f"Submitted {current_batch_jobs} jobs.")
+        if current_batch_cpus + job_cpus <= max_total_cpus:
+            submit_sbatch(sbatch_files[i])
+            current_batch_jobs += 1
+            current_batch_cpus += job_cpus
+            i += 1
+        else:
+            break
+
+    print(f"Submitted {current_batch_jobs} jobs using {current_batch_cpus} CPUs.")
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
     while check_user_jobs(STUDENT_ID):
