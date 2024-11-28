@@ -21,7 +21,7 @@ ASSIGNMENT_FOLDER = "build"
 assert STUDENT_ID and ASSIGNMENT_FOLDER, "Please fill in the STUDENT_ID and ASSIGNMENT_FOLDER variables."
 
 commands = [
-    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/lcs_mpi"
+    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/lcs_distributed"
 ]
 
 mpi_processes = [1,2,4,8]  # Number of MPI processes
