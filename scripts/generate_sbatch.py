@@ -44,7 +44,7 @@ def generate_sbatch_content(program, num_processes, num_nodes, iteration, params
 #SBATCH --ntasks={num_processes}
 #SBATCH --cpus-per-task=1
 #SBATCH --time=10:00
-#SBATCH --mem=10G
+#SBATCH --mem=5G
 #SBATCH --partition=slow
 
 echo "Running {program.split('/')[-1]} with {num_processes} MPI processes on {num_nodes} nodes: Iteration {iteration}"
