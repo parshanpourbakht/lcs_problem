@@ -28,7 +28,7 @@ threads = [1, 2, 4, 8]
 max_jobs_per_batch = 4
 max_total_cpus = 8
 iterations = 4
-string_sizes = [8000, 12000, 14000, 18000, 20000]  # Updated string sizes
+string_sizes = [8000, 12000, 14000, 16000, 18000]  # Updated string sizes
 
 # Function to generate SBATCH content
 def generate_sbatch_content(thread_count, iteration, command, str1, str2):

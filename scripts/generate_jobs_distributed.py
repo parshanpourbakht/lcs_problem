@@ -27,7 +27,7 @@ commands = [
 mpi_processes = [1,2,4,8]  # Number of MPI processes
 nodes = [1]  # Number of nodes
 iterations = 4
-string_sizes = [8000, 12000, 14000, 18000, 20000]  # Sizes of input strings
+string_sizes = [8000, 12000, 14000, 16000, 18000]  # Sizes of input strings
 
 max_jobs_per_batch = 4
 max_total_cpus = 8  # Limit on total MPI processes per batch
@@ -39,7 +39,7 @@ def generate_sbatch_content(program, num_processes, num_nodes, iteration, str1, 
 #SBATCH --ntasks={num_processes}
 #SBATCH --cpus-per-task=1
 #SBATCH --time=10:00
-#SBATCH --mem=5G
+#SBATCH --mem=10G
 #SBATCH --partition=slow
 
 echo "Running {program.split('/')[-1]} with {num_processes} MPI processes on {num_nodes} nodes: Iteration {iteration}"

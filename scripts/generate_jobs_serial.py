@@ -26,7 +26,7 @@ commands = [
 
 max_jobs_per_batch = 4
 iterations = 4
-string_sizes = [8000, 12000, 14000, 18000, 20000]  # Updated string sizes
+string_sizes = [8000, 12000, 14000, 16000, 18000]  # Updated string sizes
 
 # Function to generate SBATCH content for serial execution
 def generate_sbatch_content(iteration, command, str1, str2):
