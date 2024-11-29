@@ -156,12 +156,25 @@ main(int argc, char** argv) {
   lcs_distributed(str1, str2, numRows, numCols, rank, size);
 
   // Stop the timer and calculate total time
-  double totalTime = threadTimer.stop();
+  double totalTime = 0;
+  
+  if (rank != 0){
+    MPI_Recv(NULL, 0, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    totalTime = threadTimer.stop();
+  }
 
-  // Print the timing information only from rank 0
-  if (rank == 0) {
+  MPI_Send(NULL, 0, MPI_INT, (rank + 1) % size, 0, MPI_COMM_WORLD);
+
+  if (rank == 0){
+    MPI_Recv(NULL, 0, MPI_INT, size - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    totalTime = threadTimer.stop();
+    // Print the timing information only from rank 0
+  
     std::cout << "Time (seconds): " << totalTime << std::endl;
   }
+
+  
+  
 
   MPI_Finalize();
   return 0;
