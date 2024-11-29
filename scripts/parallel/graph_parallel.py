@@ -1,28 +1,157 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
-#8000, 12000, 14000, 16000, 18000
+# Size,Time (seconds)
+# 8000,9.26724
+# 8000,9.3513
+# 8000,9.36162
+# 8000,7.95424
+# 8000,14.5108
+# 8000,14.5085
+# 8000,14.4448
+# 8000,14.4923
+# 8000,14.4642
+# 8000,14.5206
+# 8000,14.4771
+# 8000,14.5319
+# 8000,16.6702
+# 8000,15.7097
+# 8000,16.5363
+# 8000,18.1974
+# 12000,25.5041
+# 12000,25.5524
+# 12000,25.6499
+# 12000,18.8603
+# 12000,31.4955
+# 12000,31.671
+# 12000,31.5969
+# 12000,31.2919
+# 12000,31.4684
+# 12000,31.6335
+# 12000,31.636
+# 12000,31.5734
+# 12000,33.4348
+# 12000,39.8493
+# 12000,39.2344
+# 12000,35.4649
+# 14000,36.2017
+# 14000,36.4278
+# 14000,36.7221
+# 14000,25.8575
+# 14000,44.998
+# 14000,42.3721
+# 14000,42.4572
+# 14000,42.4388
+# 14000,43.0318
+# 14000,42.889
+# 14000,42.9407
+# 14000,42.7616
+# 14000,43.4619
+# 14000,46.0642
+# 14000,44.9892
+# 14000,46.4574
+# 16000,43.165
+# 16000,43.4466
+# 16000,43.5168
+# 16000,43.4833
+# 16000,57.5836
+# 16000,57.3574
+# 16000,57.4619
+# 16000,58.2441
+# 16000,58.1013
+# 16000,58.5234
+# 16000,57.9011
+# 16000,58.5946
+# 16000,72.2998
+# 16000,61.4601
+# 16000,59.499
+# 16000,70.6045
+# 18000,65.5831
+# 18000,66.1036
+# 18000,65.9055
+# 18000,45.0204
+# 18000,77.3226
+# 18000,100.524
+# 18000,100.523
+# 18000,74.7829
+# 18000,91.4465
+# 18000,75.0007
+# 18000,89.3489
+# 18000,74.9473
+# 18000,75.963
+# 18000,77.5568
+# 18000,74.6439
+# 18000,121.583
 
-# Sample data: dictionary where keys are categories and values are lists of numbers
+
+# Sample data: dictionary where keys are string sizes and values are lists of execution times for each thread count
 data = {
-    '8000': [18.662, 18.6344, 18.6533, 18.6037],
-    '12000': [42.4051, 42.0451, 42.1263, 41.9899],
-    '14000': [57.3757, 57.5254, 57.2519, 57.7335],
-    '16000': [74.9689, 75.4585, 75.0174, 75.4856],
-    '18000': [95.6915, 94.5645, 94.4948, 95.5719]
+    8000: {
+        1: [9.26724, 9.3513, 9.36162, 7.95424],
+        2: [14.5108, 14.5085, 14.4448, 14.4923],
+        4: [14.4642, 14.5206, 14.4771, 14.5319],
+        8: [16.6702, 15.7097, 16.5363, 18.1974],
+    },
+    12000: {
+        1: [25.5041, 25.5524, 25.6499, 18.8603],
+        2: [31.4955, 31.671, 31.5969, 31.2919],
+        4: [31.4684, 31.6335, 31.636, 31.5734],
+        8: [33.4348, 39.8493, 39.2344, 35.4649],
+    },
+    14000: {
+        1: [36.2017, 36.4278, 36.7221, 25.8575],
+        2: [44.998, 42.3721, 42.4572, 42.4388],
+        4: [43.0318, 42.889, 42.9407, 42.7616],
+        8: [43.4619, 46.0642, 44.9892, 46.4574],
+    },
+    16000: {
+        1: [43.165, 43.4466, 43.5168, 43.4833],
+        2: [57.5836, 57.3574, 57.4619, 58.2441],
+        4: [58.1013, 58.5234, 57.9011, 58.5946],
+        8: [72.2998, 61.4601, 59.499, 70.6045],
+    },
+    18000: {
+        1: [65.5831, 66.1036, 65.9055, 45.0204],
+        2: [77.3226, 100.524, 100.523, 74.7829],
+        4: [91.4465, 75.0007, 89.3489, 74.9473],
+        8: [75.963, 77.5568, 74.6439, 121.583],
+    }
 }
 
-# Calculate the average for each category
-categories = list(data.keys())
-averages = [sum(values) / len(values) for values in data.values()]
+# Extract string sizes and thread counts
+string_sizes = list(data.keys())
+thread_counts = list(next(iter(data.values())).keys())
 
-# Create a bar chart
-plt.figure(figsize=(8, 6))
-plt.bar(categories, averages, color='skyblue')
+# Calculate average execution times for each string size and thread count
+averages = {
+    thread_count: [
+        sum(data[size][thread_count]) / len(data[size][thread_count])
+        for size in string_sizes
+    ]
+    for thread_count in thread_counts
+}
+
+# Plotting
+x = np.arange(len(string_sizes))  # X positions for the groups
+bar_width = 0.2  # Width of each bar
+
+plt.figure(figsize=(10, 6))
+
+for i, thread_count in enumerate(thread_counts):
+    plt.bar(
+        x + i * bar_width,
+        averages[thread_count],
+        width=bar_width,
+        label=f"{thread_count} Threads"
+    )
 
 # Add labels and title
 plt.xlabel('Size of Strings')
-plt.ylabel('average execution time')
-plt.title('Execution times for different number of strings in LCS serial implementation')
+plt.ylabel('Average Execution Time (s)')
+plt.title('Execution Times for Different String Sizes (Parallel LCS)')
+plt.xticks(x + bar_width * (len(thread_counts) - 1) / 2, string_sizes)
+plt.legend(title="Thread Count")
 
 # Show the graph
+plt.tight_layout()
 plt.show()
