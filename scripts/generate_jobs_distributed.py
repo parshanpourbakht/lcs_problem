@@ -15,13 +15,12 @@ subprocess.run(["make"], check=True)
 output_dir = "sbatch_files"
 os.makedirs(output_dir, exist_ok=True)
 
-STUDENT_ID = "vba16"
-ASSIGNMENT_FOLDER = "build"
+USER_ID = ""
 
-assert STUDENT_ID and ASSIGNMENT_FOLDER, "Please fill in the STUDENT_ID and ASSIGNMENT_FOLDER variables."
+assert USER_ID, "Please fill in the USER_ID variable."
 
 commands = [
-    f"/home/{STUDENT_ID}/{ASSIGNMENT_FOLDER}/lcs_distributed"
+    f"/home/{USER_ID}/build/lcs_distributed"
 ]
 
 mpi_processes = [1,2,4,8]  # Number of MPI processes
@@ -115,14 +114,14 @@ while i < len(sbatch_files):
     print(f"Submitted {current_batch_jobs} jobs using {current_batch_cpus} CPUs.")
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-    while check_user_jobs(STUDENT_ID):
+    while check_user_jobs(USER_ID):
         print("Waiting for jobs to finish... checking again in 5 seconds.")
         time.sleep(5)
 
     print("No jobs left. Proceeding to the next batch.")
 
 # Combine SLURM output files
-def combine_slurm_outputs(output_filename="combined_mpi_output.out"):
+def combine_slurm_outputs(output_filename="distributed_output.out"):
     slurm_files = glob.glob("slurm-*.out")
 
     if not slurm_files:
@@ -140,4 +139,16 @@ def combine_slurm_outputs(output_filename="combined_mpi_output.out"):
 
     print(f"Combined all SLURM output files into {output_filename}")
 
-combine_slurm_outputs("combined_mpi_output.out")
+# Function to delete all SLURM output files
+def delete_slurm_outputs():
+    slurm_files = glob.glob("slurm-*.out")
+    for slurm_file in slurm_files:
+        try:
+            os.remove(slurm_file)
+            print(f"Deleted: {slurm_file}")
+        except OSError as e:
+            print(f"Error deleting {slurm_file}: {e}")
+
+
+combine_slurm_outputs("distributed_output.out")
+delete_slurm_outputs()

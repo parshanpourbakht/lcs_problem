@@ -1,9 +1,0 @@
-TODO:
-[] Set up timer and timing for the distributed implementation
-[] Create a test script (probs in python .py files) to generate inputs and feed into our program (Just like the assignments)
-   Test using 1,2,4,8 processes / threads -> produce graph and elaborate on the report
-                                          -> Talk about speed up 
-                                          -> Compare each of the implementations to serial version 
-[] Talk about distributed implementation in the report 
-
-*NOTE: We can use old assignment files and stuff 
