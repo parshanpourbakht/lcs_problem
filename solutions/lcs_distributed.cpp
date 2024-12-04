@@ -114,6 +114,7 @@ lcs_distributed(const std::string& str1,
     std::cout << std::setw(5) << std::left << "Number of Processes: " << size << std::endl;
     std::cout << std::setw(5) << std::left << "str1: " << str1 << std::endl;
     std::cout << std::setw(5) << std::left << "str2: " << str2 << std::endl;
+    std::cout << std::setw(5) << std::left << "LCS Length: " << lcs.length() << std::endl;
     std::cout << "LCS: " << lcs << std::endl;
   } else {
     for (int row = startRow; row < endRow; ++row) {

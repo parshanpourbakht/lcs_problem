@@ -150,6 +150,7 @@ main(int argc, char *argv[]) {
   std::cout << std::setw(5) << std::left << "Number of Threads: " << n_threads << std::endl;
   std::cout << std::setw(5) << std::left << "str1: " << str1 << std::endl;
   std::cout << std::setw(5) << std::left << "str2: " << str2 << std::endl;
+  std::cout << std::setw(5) << std::left << "LCS Length: " << lcsValue.length() << std::endl;
   std::cout << std::setw(6) << std::left << "LCS: " << lcsValue << std::endl;
   std::cout << std::setw(5) << std::left << "Time (seconds): " << serialTime << std::endl;
 

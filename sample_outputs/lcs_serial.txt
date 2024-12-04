@@ -1,4 +1,0 @@
-./lcs_serial --str1 ABCBDAB --str2 BDCABB 
-str1: ABCBDAB
-str2: BDCABB
-LCS: 4
