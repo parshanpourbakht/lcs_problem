@@ -20,7 +20,7 @@ USER_ID = ""
 assert USER_ID, "Please fill in the USER_ID variable."
 
 commands = [
-    f"/home/{USER_ID}/build/lcs_serial"
+    f"/home/{USER_ID}/lcs_problem/scripts/lcs_serial"
 ]
 
 max_jobs_per_batch = 4

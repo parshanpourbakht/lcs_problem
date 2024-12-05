@@ -20,7 +20,7 @@ USER_ID = ""
 assert USER_ID , "Please fill in the USER_ID variable."
 
 commands = [
-    f"/home/{USER_ID}/build/lcs_parallel"
+    f"/home/{USER_ID}/lcs_problem/scripts/lcs_parallel"
 ]
 
 threads = [1, 2, 4, 8]

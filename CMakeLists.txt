@@ -25,6 +25,9 @@ add_executable(lcs_distributed solutions/lcs_distributed.cpp)
 # Link MPI for the distributed target
 target_link_libraries(lcs_distributed ${MPI_LIBRARIES})
 
+# Link pthread for the parallel target
+target_link_libraries(lcs_parallel pthread)
+
 # Custom targets for Python scripts
 add_custom_target(
     serial_script

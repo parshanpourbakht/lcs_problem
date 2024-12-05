@@ -20,7 +20,7 @@ USER_ID = ""
 assert USER_ID, "Please fill in the USER_ID variable."
 
 commands = [
-    f"/home/{USER_ID}/build/lcs_distributed"
+    f"/home/{USER_ID}/lcs_problem/scripts/lcs_distributed"
 ]
 
 mpi_processes = [1,2,4,8]  # Number of MPI processes
