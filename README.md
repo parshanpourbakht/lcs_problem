@@ -38,11 +38,13 @@ This project implements the Longest Common Subsequence (LCS) algorithm using var
    ```bash
    ./lcs_serial --str1 <first string> --str2 <second string>
    ./lcs_parallel --nThreads <number of threads> --str1 <first string> --str2 <second string>
-   ./lcs_distributed --nThreads <number of threads> --str1 <first string> --str2 <second string>
+   mpirun -n <number of processes> ./lcs_distributed --str1 <first string> --str2 <second string>
 
 6. **Run Scripts**
    ```bash
    cd ../lcs_problem/scripts
+   cmake ../
+   make
    edit generate_jobs_*.py files and set the "USER_ID" variable at the top to your slurm user ID 
    python3 generate_jobs_serial.py
    python3 generate_jobs_parallel.py
