@@ -43,6 +43,8 @@ This project implements the Longest Common Subsequence (LCS) algorithm using var
 6. **Run Scripts**
    ```bash
    cd ../lcs_problem/scripts
+   cmake ../
+   make
    edit generate_jobs_*.py files and set the "USER_ID" variable at the top to your slurm user ID 
    python3 generate_jobs_serial.py
    python3 generate_jobs_parallel.py
